@@ -14,7 +14,7 @@ AGENTS = {
     "meal_planner_agent": {
         "name": "meal_planner_agent",
         "description": "晚餐计划专家，基于菜谱生成每日晚餐计划。",
-        "model": "gpt-4o-mini",
+        "model": "qwen3-4b",
         "prompt": (
             "# 角色与背景\n"
             "你是晚餐计划专家。你会在监督智能体的指派下，根据菜谱数据库生成每日晚餐计划。\n\n"
@@ -39,7 +39,7 @@ AGENTS = {
     "calendar_agent": {
         "name": "calendar_agent",
         "description": "日历管理专家，负责添加与查询事件。",
-        "model": "gpt-4o-mini",
+        "model": "qwen3-4b",
         "prompt": (
             "# 角色与背景\n"
             "你是日历管理专家。在监督智能体的指派下，查询与添加家庭/个人/工作日历事件。\n\n"
@@ -62,7 +62,7 @@ AGENTS = {
     "notion_agent": {
         "name": "notion_agent",
         "description": "笔记与购物清单管理专家（内存模拟）。",
-        "model": "gpt-4o-mini",
+        "model": "qwen3-4b",
         "prompt": (
             "# 角色与背景\n"
             "你负责管理购物清单与Mind Base（想法/待办）。\n\n"
@@ -86,7 +86,7 @@ AGENTS = {
     "contact_agent": {
         "name": "contact_agent",
         "description": "联系人管理专家（内存模拟）。",
-        "model": "gpt-4o-mini",
+        "model": "qwen3-4b",
         "prompt": (
             "# 角色与背景\n"
             "你负责查询联系人信息，用于邮件或其他任务。\n\n"
@@ -105,7 +105,7 @@ AGENTS = {
     "email_agent": {
         "name": "email_agent",
         "description": "邮件管理专家（内存模拟）。",
-        "model": "gpt-4o-mini",
+        "model": "qwen3-4b",
         "prompt": (
             "# 角色与背景\n"
             "你负责读取邮件、发送邮件、创建草稿与打标签。\n\n"

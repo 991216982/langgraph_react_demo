@@ -1,8 +1,10 @@
 """监督智能体定义：拆解任务并将子任务分派给合适的子智能体。"""
 
+import logging
 from typing import Literal
 from typing_extensions import TypedDict
-from langchain_openai import ChatOpenAI
+import os
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langgraph.graph import MessagesState, END
 from langgraph.types import Command
 from ..config import AGENTS, MEMBERS
@@ -17,7 +19,11 @@ for key, data in AGENTS.items():
         agent_members_prompt.append("")
 agent_members_prompt_final = "\n".join(agent_members_prompt)
 
-supervisor_llm = ChatOpenAI(model="gpt-4o")
+logger = logging.getLogger(__name__)
+if not os.environ.get("DASHSCOPE_API_KEY"):
+    logger.error("DASHSCOPE_API_KEY 未设置")
+    raise RuntimeError("DASHSCOPE_API_KEY 未设置")
+supervisor_llm = ChatTongyi(model="qwen3-4b", model_kwargs={"enable_thinking": False})
 
 class State(MessagesState):
     """监督态的消息状态，包含下一跳智能体标识。"""
@@ -25,7 +31,7 @@ class State(MessagesState):
 
 class SupervisorOutput(TypedDict):
     """监督模型的结构化输出。"""
-    next: Literal[*MEMBERS, "FINISH"]
+    next: Literal["calendar_agent", "notion_agent", "meal_planner_agent", "contact_agent", "email_agent", "FINISH"]
     task_description_for_agent: str
     message_completion_summary: str
 
@@ -54,13 +60,17 @@ supervisor_system_prompt = f"""
 - 对每次返回做出简短完成情况评估。
 """
 
-def supervisor_node(state: State) -> Command[Literal[*MEMBERS, "__end__"]]:
+def supervisor_node(state: State) -> Command[Literal["calendar_agent", "notion_agent", "meal_planner_agent", "contact_agent", "email_agent", "__end__"]]:
     """监督节点：根据当前消息决定下一步路由并生成子任务指令。"""
+    logger.info("supervisor_node received %d messages", len(state["messages"]))
     messages = [{"role": "system", "content": supervisor_system_prompt}] + state["messages"]
     response = supervisor_llm.with_structured_output(SupervisorOutput).invoke(messages)
     goto = response["next"]
+    logger.info("supervisor decision: next=%s", goto)
     if goto == "FINISH":
+        logger.info("supervisor finished")
         return Command(goto=END, update={"next": END})
     # 将监督给出的子任务说明注入到消息流，交由目标子智能体处理
     new_messages = [{"role": "system", "content": response["task_description_for_agent"]}]
+    logger.info("task_description_for_agent length=%d", len(response["task_description_for_agent"]))
     return Command(goto=goto, update={"next": goto, "messages": new_messages})

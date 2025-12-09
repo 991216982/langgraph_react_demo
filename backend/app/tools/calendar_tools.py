@@ -1,7 +1,9 @@
 """日历工具：在内存中模拟查询与添加日历事件。"""
 
+import logging
 from datetime import datetime, timedelta
 from langchain_core.tools import tool
+logger = logging.getLogger(__name__)
 
 MOCK_EVENTS = {
     "family": [
@@ -19,7 +21,9 @@ MOCK_EVENTS = {
 def get_current_date_and_time():
     """获取当前日期时间与星期信息。"""
     now = datetime.now()
-    return {"datetime": now.strftime("%Y-%m-%d %H:%M:%S"), "day_of_the_week": now.strftime("%A")}
+    result = {"datetime": now.strftime("%Y-%m-%d %H:%M:%S"), "day_of_the_week": now.strftime("%A")}
+    logger.info("get_current_date_and_time %s %s", result["datetime"], result["day_of_the_week"]) 
+    return result
 
 @tool
 def get_calendar_events(startDate: str = None, endDate: str = None):
@@ -29,16 +33,19 @@ def get_calendar_events(startDate: str = None, endDate: str = None):
         startDate: 起始日期（保留参数，当前未过滤）。
         endDate: 结束日期（保留参数，当前未过滤）。
     """
+    logger.info("get_calendar_events start=%s end=%s", startDate, endDate)
     events = []
     for calendar_id in MOCK_EVENTS:
         for event in MOCK_EVENTS[calendar_id]:
             events.append({"calendarId": calendar_id, **event})
+    logger.info("get_calendar_events returned=%d", len(events))
     return events
 
 @tool
 def add_calendar_event(startDate: datetime, endDate: datetime, calendar_name: str, title: str, description: str):
     """向指定日历添加事件，并返回创建的事件。"""
     if calendar_name not in MOCK_EVENTS:
+        logger.info("add_calendar_event unknown calendar=%s", calendar_name)
         return {"error": "unknown calendar"}
     event = {
         "summary": title,
@@ -47,4 +54,5 @@ def add_calendar_event(startDate: datetime, endDate: datetime, calendar_name: st
         "end": {"dateTime": endDate.isoformat()},
     }
     MOCK_EVENTS[calendar_name].append(event)
+    logger.info("add_calendar_event calendar=%s title_length=%d", calendar_name, len(title))
     return event

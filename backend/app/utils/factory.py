@@ -1,7 +1,9 @@
 """智能体工厂：根据配置构建子智能体节点函数。"""
 
+import logging
 from typing import Literal
-from langchain_openai import ChatOpenAI
+import os
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langchain_core.messages import AIMessage
 from langgraph.types import Command
 from langgraph.graph import MessagesState
@@ -9,6 +11,7 @@ from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 from ..config import AGENTS
 from ..tools.registry import TOOLS_REGISTRY
+logger = logging.getLogger(__name__)
 
 def _parse_tool_name(tool_description: str) -> str:
     """从工具描述字符串中解析函数名。"""
@@ -41,14 +44,21 @@ def create_agent_node(agent_name: str, default_goto: str = "supervisor"):
         一个可用于 `StateGraph.add_node` 的可调用节点函数。
     """
     agent_config = _get_agent_config(agent_name)
+    logger.info("create_agent_node %s model=%s tools=%d", agent_name, agent_config["model"], len(agent_config["tools"]))
+    dashscope_api_key = os.environ.get("DASHSCOPE_API_KEY")
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if not dashscope_api_key:
+        logger.error("DASHSCOPE_API_KEY 未设置")
+        raise RuntimeError("DASHSCOPE_API_KEY 未设置")
     memory = MemorySaver()
-    chat_model = ChatOpenAI(model=agent_config["model"])
+    chat_model = ChatTongyi(model=agent_config["model"], model_kwargs={"enable_thinking": False})
     agent = create_react_agent(chat_model, tools=agent_config["tools"], prompt=agent_config["prompt"], checkpointer=memory)
 
     def node_func(state: MessagesState) -> Command[Literal[default_goto]]:
-        # 调用子智能体执行当前状态消息
+        logger.info("%s node received %d messages", agent_name, len(state["messages"]))
         result = agent.invoke(state)
-        # 仅将该子智能体的最新回复写回消息流，并路由回监督节点
-        return Command(update={"messages": [AIMessage(content=result["messages"][-1].content, name=agent_name)]}, goto=default_goto)
+        last_content = result["messages"][-1].content if result["messages"] else ""
+        logger.info("%s model reply length=%d", agent_name, len(str(last_content)))
+        return Command(update={"messages": [AIMessage(content=last_content, name=agent_name)]}, goto=default_goto)
 
     return node_func

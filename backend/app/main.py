@@ -1,11 +1,17 @@
 """FastAPI 应用入口，提供智能体调用接口与图可视化等端点。"""
 
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .graph import graph
 from .config import MEMBERS
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # 配置跨域，允许本地开发前端与任意来源访问
@@ -25,17 +31,21 @@ class InvokeInput(BaseModel):
 @app.get("/")
 def root():
     """健康检查端点，返回服务运行状态。"""
+    logger.info("root health check")
     return {"status": "ok"}
 
 @app.get("/api/agents")
 def list_agents():
     """返回已注册的子智能体名称列表。"""
+    logger.info("list agents: %d", len(MEMBERS))
     return {"agents": MEMBERS}
 
 @app.get("/api/mermaid")
 def mermaid():
     """返回当前 LangGraph 的 Mermaid 表示，用于前端可视化。"""
-    return {"mermaid": graph.get_graph().draw_mermaid()}
+    mermaid_text = graph.get_graph().draw_mermaid()
+    logger.info("mermaid requested, length=%d", len(mermaid_text))
+    return {"mermaid": mermaid_text}
 
 @app.post("/api/invoke")
 def invoke(input: InvokeInput):
@@ -47,7 +57,8 @@ def invoke(input: InvokeInput):
     返回:
         一个包含消息类型与内容的列表，用于前端展示。
     """
-    # 将输入消息提交到图执行
+    logger.info("invoke called with %d messages", len(input.messages))
     state = graph.invoke({"messages": input.messages})
-    # 统一提取消息类型与文本内容
-    return {"messages": [(message.type, getattr(message, "content", "")) for message in state["messages"]]}
+    normalized = [(message.type, getattr(message, "content", "")) for message in state["messages"]]
+    logger.info("invoke completed, %d messages returned", len(normalized))
+    return {"messages": normalized}
