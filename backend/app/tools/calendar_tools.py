@@ -1,3 +1,5 @@
+"""日历工具：在内存中模拟查询与添加日历事件。"""
+
 from datetime import datetime, timedelta
 from langchain_core.tools import tool
 
@@ -15,19 +17,27 @@ MOCK_EVENTS = {
 
 @tool
 def get_current_date_and_time():
+    """获取当前日期时间与星期信息。"""
     now = datetime.now()
     return {"datetime": now.strftime("%Y-%m-%d %H:%M:%S"), "day_of_the_week": now.strftime("%A")}
 
 @tool
 def get_calendar_events(startDate: str = None, endDate: str = None):
+    """返回当前内存中的所有日历事件。
+
+    参数:
+        startDate: 起始日期（保留参数，当前未过滤）。
+        endDate: 结束日期（保留参数，当前未过滤）。
+    """
     events = []
-    for k in MOCK_EVENTS:
-        for e in MOCK_EVENTS[k]:
-            events.append({"calendarId": k, **e})
+    for calendar_id in MOCK_EVENTS:
+        for event in MOCK_EVENTS[calendar_id]:
+            events.append({"calendarId": calendar_id, **event})
     return events
 
 @tool
 def add_calendar_event(startDate: datetime, endDate: datetime, calendar_name: str, title: str, description: str):
+    """向指定日历添加事件，并返回创建的事件。"""
     if calendar_name not in MOCK_EVENTS:
         return {"error": "unknown calendar"}
     event = {
@@ -38,4 +48,3 @@ def add_calendar_event(startDate: datetime, endDate: datetime, calendar_name: st
     }
     MOCK_EVENTS[calendar_name].append(event)
     return event
-

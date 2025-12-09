@@ -1,3 +1,6 @@
+"""系统配置：包含可用子智能体成员与各智能体的提示与工具定义。"""
+
+# 已启用的子智能体成员列表，用于图构建与监督路由
 MEMBERS = [
     "calendar_agent",
     "notion_agent",
@@ -6,6 +9,7 @@ MEMBERS = [
     "email_agent",
 ]
 
+# 各智能体的详细配置：名称、描述、模型、提示词模板与工具说明
 AGENTS = {
     "meal_planner_agent": {
         "name": "meal_planner_agent",
@@ -120,4 +124,3 @@ AGENTS = {
         ],
     },
 }
-

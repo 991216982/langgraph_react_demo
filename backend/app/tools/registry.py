@@ -1,3 +1,5 @@
+"""工具注册表：将工具函数统一映射为名称，供智能体调用。"""
+
 from .calendar_tools import get_current_date_and_time, get_calendar_events, add_calendar_event
 from .notion_tools import get_shopping_list, add_entry_to_mindbase, add_to_shopping_list
 from .contact_tools import get_contacts, get_single_contact
@@ -20,4 +22,3 @@ TOOLS_REGISTRY = {
   "get_recipes": get_recipes,
   "human_feedback": human_feedback,
 }
-

@@ -50,7 +50,7 @@ demo_project/
 
 1. 进入后端目录：
    ```bash
-   cd demo_project/backend
+   cd backend
    ```
 2. 创建并激活虚拟环境（Windows）：
    ```bash
@@ -79,7 +79,7 @@ demo_project/
 
 1. 进入前端目录：
    ```bash
-   cd demo_project/frontend
+   cd frontend
    ```
 2. 安装依赖：
    ```bash
@@ -104,7 +104,7 @@ demo_project/
 
 - 本示例不调用任何外部应用（Google、Notion、Gmail等）；所有工具均为内存Map模拟。
 - 提示词内容为中文，且尽量保持结构化与可读性，方便学习与二次改造。
-- 如需对接真实外部服务，可参照原项目在 `tools/` 下替换为实际实现，并更新工具注册表。
+
 
 ## 接口一览
 
