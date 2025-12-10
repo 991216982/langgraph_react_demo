@@ -44,7 +44,7 @@ def create_agent_node(agent_name: str, default_goto: str = "supervisor"):
         一个可用于 `StateGraph.add_node` 的可调用节点函数。
     """
     agent_config = _get_agent_config(agent_name)
-    logger.info("create_agent_node %s model=%s tools=%d", agent_name, agent_config["model"], len(agent_config["tools"]))
+    logger.info("创建子智能体节点 %s 模型=%s 工具数=%d", agent_name, agent_config["model"], len(agent_config["tools"]))
     dashscope_api_key = os.environ.get("DASHSCOPE_API_KEY")
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if not dashscope_api_key:
@@ -55,10 +55,13 @@ def create_agent_node(agent_name: str, default_goto: str = "supervisor"):
     agent = create_react_agent(chat_model, tools=agent_config["tools"], prompt=agent_config["prompt"], checkpointer=memory)
 
     def node_func(state: MessagesState) -> Command[Literal[default_goto]]:
-        logger.info("%s node received %d messages", agent_name, len(state["messages"]))
+        logger.info("%s 节点接收%d条消息", agent_name, len(state["messages"]))
+        if state["messages"]:
+            m = state["messages"][-1]
+            logger.info("%s 输入最后一条 role=%s 长度=%d 头部=%s", agent_name, getattr(m, "type", getattr(m, "role", "")), len(getattr(m, "content", "")), str(getattr(m, "content", ""))[:200])
         result = agent.invoke(state)
         last_content = result["messages"][-1].content if result["messages"] else ""
-        logger.info("%s model reply length=%d", agent_name, len(str(last_content)))
+        logger.info("%s 输出消息数=%d 最后一条长度=%d 头部=%s", agent_name, len(result.get("messages", [])), len(str(last_content)), str(last_content)[:200])
         return Command(update={"messages": [AIMessage(content=last_content, name=agent_name)]}, goto=default_goto)
 
     return node_func

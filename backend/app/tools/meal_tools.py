@@ -1,4 +1,4 @@
-"""餐食工具（内存模拟）：提供菜谱与人类确认接口。"""
+"""餐食工具（内存模拟）：提供菜谱接口。"""
 
 import logging
 from langchain_core.tools import tool
@@ -12,11 +12,6 @@ MOCK_RECIPES = [
 @tool
 def get_recipes():
     """返回可选菜谱及其食材。"""
-    logger.info("get_recipes count=%d", len(MOCK_RECIPES))
+    logger.info("获取菜谱 数量=%d 菜名=%s", len(MOCK_RECIPES), ",".join([r["name"] for r in MOCK_RECIPES]))
     return {"data": MOCK_RECIPES}
 
-@tool
-def human_feedback(query: str):
-    """模拟人类确认流程，返回统一的确认结果。"""
-    logger.info("human_feedback query_length=%d", len(query))
-    return {"feedback": "已确认"}
